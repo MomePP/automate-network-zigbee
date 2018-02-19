@@ -7,13 +7,15 @@
 */
 
 #include <WiFi.h>
-#include "network-selector.h"
 // #include <HTTPClient.h>
-
-NetworkSelector networkMome("momeLaptop", "Memoriedz3280");
 
 const char *ssid = "momeLaptop";
 const char *password = "Memoriedz3280";
+uint8_t deviceRegisters[32];
+
+#include "network-selector.h"
+
+NetworkSelector networkMome("momeLaptop", "Memoriedz3280");
 
 void setup()
 {
@@ -22,23 +24,32 @@ void setup()
 
   // We start by connecting to a WiFi network
 
-  Serial.println();
-  Serial.println();
-  Serial.print("Connecting to ");
-  Serial.println(ssid);
+  // Serial.println();
+  // Serial.println();
+  // Serial.print("Connecting to ");
+  // Serial.println(ssid);
 
   WiFi.begin(ssid, password);
   WiFi.waitForConnectResult();
 
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
+  // while (WiFi.status() != WL_CONNECTED) {
+  //   delay(500);
+  //   // Serial.print(".");
+  // }
 
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  // Serial.println("");
+  // Serial.println("WiFi connected");
+  // Serial.println("IP address: ");
+  // Serial.println(WiFi.localIP());
+
+  // char *test = "field1=100";
+
+  // Serial.println(strlen(test));
+
+  // for (int i=0; i<strlen(test); i++) {
+  //   Serial.print(test[i]);
+  //   Serial.print((uint8_t)test[i]);
+  // }
 }
 
 void loop()
@@ -47,8 +58,8 @@ void loop()
 
   int resCode = networkMome.post("https://data.learninginventions.org/update?key=83JY45SPBM64U4TA", "field1=100");
 
-  Serial.println(resCode);
-  Serial.println(networkMome.getResponseBody());
+  // Serial.println(resCode);
+  // Serial.println(networkMome.getResponseBody());
 
   delay(10000); //Send a request every 10 seconds
 }
