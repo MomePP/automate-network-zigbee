@@ -13,12 +13,27 @@ const char *ssid = "momeLaptop";
 const char *password = "Memoriedz3280";
 uint8_t deviceRegisters[32];
 
+char *payload;
+String payload_str;
+String dataField = "field1=";
+
 #include "network-selector.h"
 
 NetworkSelector networkMome("momeLaptop", "Memoriedz3280");
 
+char *string2char(String command)
+{
+  if (command.length() != 0)
+  {
+    char *p = (char *)command.c_str();
+    return p;
+  }
+}
+
 void setup()
 {
+  pinMode(34, INPUT);
+
   Serial.begin(115200);
   delay(10);
 
@@ -55,11 +70,17 @@ void setup()
 void loop()
 {
   // Serial.println(networkMome.status());
+  payload_str = dataField + analogRead(34);
+  // payload_str = "field1=2000";
+  // payload = string2char(payload_str);
+  // Serial.println(payload);
+  // payload = "field1=3000";
 
-  int resCode = networkMome.post("https://data.learninginventions.org/update?key=83JY45SPBM64U4TA", "field1=100");
+  int resCode = networkMome.post("https://data.learninginventions.org/update?key=83JY45SPBM64U4TA", payload_str);
+  // networkMome.post("https://data.learninginventions.org/update?key=83JY45SPBM64U4TA", payload);
 
   // Serial.println(resCode);
   // Serial.println(networkMome.getResponseBody());
 
-  delay(10000); //Send a request every 10 seconds
+  delay(5000); //Send a request every 10 seconds
 }

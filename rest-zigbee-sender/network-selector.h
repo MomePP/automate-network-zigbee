@@ -9,7 +9,7 @@ class NetworkSelector
     NetworkSelector(char *ssid, char *pwd);
     int status();
     // get(char* url);
-    int post(char *url, char *payload);
+    int post(char *url, String payload);
     String getResponseBody();
     // String post(char *url, char *body);
     // post(char* url, char* header[], char* body);

@@ -29,7 +29,7 @@ int NetworkSelector::status()
 // {
 // }
 
-int NetworkSelector::post(char *url, char *payload)
+int NetworkSelector::post(char *url, String payload)
 {
     int responseCode = 0;
     bool zigbeeFlag = 0;
@@ -38,7 +38,6 @@ int NetworkSelector::post(char *url, char *payload)
 
     if (WiFi.status() == WL_CONNECTED)
     {
-
         HTTPClient http;
 
         http.begin(url);                                                     //Specify destination for HTTP request
@@ -69,9 +68,11 @@ int NetworkSelector::post(char *url, char *payload)
 
         deviceRegisters[0] = 0x0c;
         deviceRegisters[1] = 0x02;
-        deviceRegisters[2] = (uint8_t)strlen(payload);
+        // deviceRegisters[2] = (uint8_t)strlen(payload);
+        deviceRegisters[2] = (uint8_t)payload.length();
 
-        for (int i = 0; i < strlen(payload); i++)
+        // for (int i = 0; i < strlen(payload); i++)
+        for (int i = 0; i < payload.length(); i++)
         {
             deviceRegisters[i + 3] = (uint8_t)payload[i];
             // Serial.print(payload[i]);
