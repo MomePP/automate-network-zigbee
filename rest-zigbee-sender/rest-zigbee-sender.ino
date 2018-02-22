@@ -82,5 +82,5 @@ void loop()
   // Serial.println(resCode);
   // Serial.println(networkMome.getResponseBody());
 
-  delay(5000); //Send a request every 10 seconds
+  delay(8000); //Send a request every 10 seconds
 }
