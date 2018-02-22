@@ -11,13 +11,17 @@ bool isNewPkt = false;
 bool isHeaderPkt = true;
 int counterPkt = 0;
 int pkt_size = 32;
+int payload_size = 0;
 uint8_t bytePkt;
 uint8_t firstBytePkt;
 uint8_t secondBytePkt;
 
+HardwareSerial Serial2(2);
+
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(115200); // debug uart
+    Serial2.begin(115200); // zigbee uart
     delay(10);
 
     WiFi.begin(ssid, password);
@@ -29,64 +33,135 @@ void loop()
     receiveReportPkt();
 }
 
+// void receiveReportPkt()
+// {
+//     if (Serial.available()) // incoming serial detect
+//     {
+//         firstBytePkt = Serial.read();
+//         secondBytePkt = Serial.read();
+//         if (firstBytePkt == (int)0x54 && secondBytePkt == (int)0xfe) // check first byte of packet
+//         {
+//             // Serial.println("header packet byte detect !!");
+//             headerPkt[counterPkt] == firstBytePkt; // put first byte to registers
+//             headerPkt[counterPkt] == secondBytePkt; // put second byte to registers
+//             counterPkt = 2; // set counter to skip first two byte already received
+
+//             while (Serial.available() > 0) // loop to receive all the packet
+//             {
+//                 if (isHeaderPkt == true)
+//                 {
+//                     bytePkt = Serial.read();
+//                     headerPkt[counterPkt] = bytePkt;
+//                     // Serial.print(counterPkt);
+//                     // Serial.print(" : ");
+//                     // Serial.println(bytePkt, HEX);
+
+//                     if (counterPkt >= 10)
+//                     {
+//                         isHeaderPkt = false;
+//                         counterPkt = 0;
+//                     }
+//                     else
+//                     {
+//                         counterPkt++;
+//                     }
+//                 }
+//                 else
+//                 {
+//                     // ** static size need to be solve when develop processes
+//                     deviceRegisters[counterPkt] = Serial.read();
+//                     // Serial.print(counterPkt);
+//                     // Serial.print(" : ");
+//                     // Serial.println(deviceRegisters[counterPkt], HEX);
+//                     counterPkt++;
+//                 }
+//             }
+//             // reset all flags
+//             isNewPkt = true;
+//             counterPkt = 0;
+//             isHeaderPkt = true;
+
+//             ReportPkt_Process();
+//         }
+//         else // flush all the serial buffer
+//         {
+//             while (Serial.available())
+//             {
+//                 Serial.read();
+//             }
+//             // Serial.end();
+//             // Serial.begin(115200);
+//         }
+//     }
+// }
+
 void receiveReportPkt()
 {
-    if (Serial.available()) // incoming serial detect
+    if (Serial2.available())
     {
-        firstBytePkt = Serial.read();
-        secondBytePkt = Serial.read();
-        if (firstBytePkt == (int)0x54 && secondBytePkt == (int)0xfe) // check first byte of packet
+        firstBytePkt = Serial2.read();
+
+        if (firstBytePkt == (int)0x54)
         {
-            // Serial.println("header packet byte detect !!");
-            headerPkt[counterPkt] == firstBytePkt; // put first byte to registers
-            headerPkt[counterPkt] == secondBytePkt; // put second byte to registers
-            counterPkt = 2; // set counter to skip first two byte already received
+            secondBytePkt = Serial2.read();
 
-            while (Serial.available() > 0) // loop to receive all the packet
+            if (secondBytePkt == (int)0xfe)
             {
-                if (isHeaderPkt == true)
-                {
-                    bytePkt = Serial.read();
-                    headerPkt[counterPkt] = bytePkt;
-                    // Serial.print(counterPkt);
-                    // Serial.print(" : ");
-                    // Serial.println(bytePkt, HEX);
+                headerPkt[counterPkt] == firstBytePkt;  // put first byte to registers
+                headerPkt[counterPkt] == secondBytePkt; // put second byte to registers
+                counterPkt = 2;                         // set counter to skip first two byte already received
 
-                    if (counterPkt >= 10)
+                while (Serial2.available() > 0) // loop to receive all the packet
+                {
+                    if (isHeaderPkt == true)
                     {
-                        isHeaderPkt = false;
-                        counterPkt = 0;
+                        bytePkt = Serial2.read();
+                        headerPkt[counterPkt] = bytePkt;
+                        // Serial.print(counterPkt);
+                        // Serial.print(" : ");
+                        // Serial.print(bytePkt, HEX);
+
+                        if (counterPkt >= 10)
+                        {
+                            isHeaderPkt = false;
+                            counterPkt = 0;
+
+                            pkt_size = headerPkt[10];
+                            // Serial2.println(pkt_size);
+                        }
+                        else
+                        {
+                            counterPkt++;
+                        }
                     }
                     else
                     {
-                        counterPkt++;
+                        // ** static size need to be solve when develop processes
+                        if (counterPkt < pkt_size)
+                        {
+                            deviceRegisters[counterPkt] = Serial2.read();
+                            // Serial.print(counterPkt);
+                            // Serial.print(" : ");
+                            // Serial.print(deviceRegisters[counterPkt], HEX);
+                            counterPkt++;
+                        }
+                        else
+                        {
+                            Serial2.read();
+                        }
                     }
                 }
-                else
-                {
-                    // ** static size need to be solve when develop processes
-                    deviceRegisters[counterPkt] = Serial.read();
-                    // Serial.print(counterPkt);
-                    // Serial.print(" : ");
-                    // Serial.println(deviceRegisters[counterPkt], HEX);
-                    counterPkt++;
-                }
-            }
-            // reset all flags
-            isNewPkt = true;
-            counterPkt = 0;
-            isHeaderPkt = true;
+                payload_size = deviceRegisters[2];
 
-            ReportPkt_Process();
-        }
-        else // flush all the serial buffer
-        {
-            while (Serial.available())
-            {
-                Serial.read();
+                // Serial.println(payload_size);
+
+                // reset all flags
+                isNewPkt = true;
+                counterPkt = 0;
+                isHeaderPkt = true;
+
+                ReportPkt_Process();
             }
-            // Serial.end();
-            // Serial.begin(115200);
         }
     }
 }
@@ -97,12 +172,14 @@ void ReportPkt_Process()
     {
         if (deviceRegisters[1] == (int)0x02) // post method
         {
-            char payload[(int)deviceRegisters[2]];
+            char payload[payload_size];
 
-            for (int i = 0; i < (int)deviceRegisters[2]; i++)
+            for (int i = 0; i < payload_size; i++)
             {
                 payload[i] = deviceRegisters[i + 3];
                 // Serial.println(payload[i]);
+                delay(10);
+
             }
             // Serial.println(payload);
             restful_post(payload);
@@ -117,6 +194,8 @@ void restful_post(char *body)
     if (WiFi.status() == WL_CONNECTED)
     {
         HTTPClient http;
+
+        Serial.println(body);
 
         http.begin("https://data.learninginventions.org/update?key=83JY45SPBM64U4TA"); //Specify destination for HTTP request
         http.addHeader("Content-Type", "application/x-www-form-urlencoded");           //Specify content-type header
